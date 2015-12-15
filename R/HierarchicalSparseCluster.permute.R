@@ -27,7 +27,9 @@ function(x,  nperms=10, wbounds=NULL, dissimilarity=c("squared.distance","absolu
     cat("Permutation ", k, " of ", nperms,fill=TRUE)
     # Oooohhhh.. It turns out that rather than permuting the columns of x and then computing a dist matrix, we can simply permute
     #  the columns of the (n choose 2)xp dist matrix.
-    foreach(j=1:ncol(permdists)) %dopar% permdists[,j] <- sample(permdists[,j])
+    foreach(j=1:ncol(permdists)) %dopar% {
+      permdists[,j] <- sample(permdists[,j])
+    }
     foreach(i=1:length(wbounds)) %dopar% {
       cat(i,fill=FALSE)
       perm.out <- HierarchicalSparseCluster(x=NULL, dists=permdists,wbound=wbounds[i], silent=TRUE,dissimilarity=dissimilarity)
