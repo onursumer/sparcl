@@ -23,19 +23,23 @@ function(x,  nperms=10, wbounds=NULL, dissimilarity=c("squared.distance","absolu
   cat(fill=TRUE)
   cat("Running sparse hierarchical clustering on permuted data",fill=TRUE)
   permdists <- out$dists
-  foreach(k=1:nperms) %dopar% {
+  permtots <- foreach(k=1:nperms, .combine=cbind) %dopar% {
     cat("Permutation ", k, " of ", nperms,fill=TRUE)
     # Oooohhhh.. It turns out that rather than permuting the columns of x and then computing a dist matrix, we can simply permute
     #  the columns of the (n choose 2)xp dist matrix.
-    foreach(j=1:ncol(permdists)) %dopar% {
-      permdists[,j] <- sample(permdists[,j])
+    permdists <- foreach(j=1:ncol(permdists), .combine=cbind) %dopar% {
+      #permdists[,j] <- sample(permdists[,j])
+      sample(permdists[,j])
     }
-    foreach(i=1:length(wbounds)) %dopar% {
+    
+    permtots[,k] <- foreach(i=1:length(wbounds), .combine=cbind) %dopar% {
       cat(i,fill=FALSE)
       perm.out <- HierarchicalSparseCluster(x=NULL, dists=permdists,wbound=wbounds[i], silent=TRUE,dissimilarity=dissimilarity)
-      permtots[i,k] <- max(perm.out$crit)
+      #permtots[i,k] <- max(perm.out$crit)
+      max(perm.out$crit);
     }
     cat(fill=TRUE)
+    permtots[,k];
   }
   gaps <- (log(tots)-apply(log(permtots),1,mean))
   out <- list(tots=tots, permtots=permtots, nnonzerows=nnonzerows, gaps=gaps, sdgaps=apply(log(permtots),1,sd), wbounds=wbounds, bestw=wbounds[which.max(gaps)], dists=out$dists)
